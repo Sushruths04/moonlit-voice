@@ -11,8 +11,8 @@ huggingface_hub==1.19.0
 soundfile==0.14.0
 librosa==0.11.0
 numpy==2.2.6
+modal==1.5.0
 
 # --- Stretch (install only when enabling that feature) ---
 # cohere            # S4 Tiny Aya / Transcribe
-# modal             # S3 GPU inference
 # (FLUX.2-klein deps per Black Forest Labs card)        # S2 cover art

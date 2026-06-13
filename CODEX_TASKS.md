@@ -36,7 +36,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
   violence, no fear, no death, nothing scary."* Inject genre/mood/hero_name/language.
   Lazy-load the model once (module global). Acceptance: for each of {animals, kingdom, space,
   dragons, ocean, forest} × {magical, funny, calming, dreamy} returns a coherent ≤~160-word story.
-- [ ] **T1.3 `tts.py`** — `clone_and_speak(ref_wav, text, speed=0.9) -> str` using `openbmb/VoxCPM2`:
+- [x] **T1.3 `tts.py`** — `clone_and_speak(ref_wav, text, speed=0.9) -> str` using `openbmb/VoxCPM2`:
   load model once; clone from `ref_wav`; synthesize `text` at a slow bedtime pace; return a 48kHz wav path.
   Read the exact API from the VoxCPM2 model card — do not guess. Delete intermediate temp files.
   Acceptance: given a sample voice + a sentence, produces an audible wav that resembles the reference voice.
