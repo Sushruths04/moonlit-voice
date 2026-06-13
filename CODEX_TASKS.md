@@ -11,7 +11,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
 
 - [x] **T0.1** Initialize the repo. Create `.gitignore` (Python, `.venv/`, `__pycache__/`, `*.wav`,
   `.env`, `tmp/`), and a `README.md` stub. Acceptance: `git status` clean after first commit.
-- [ ] **T0.2** Create `requirements.txt` with **pinned** versions: `gradio`, `torch`,
+- [x] **T0.2** Create `requirements.txt` with **pinned** versions: `gradio`, `torch`,
   the VoxCPM2 runtime (`voxcpm` and/or `transformers` per the VoxCPM2 model card),
   `huggingface_hub`, `soundfile`, `librosa`, `numpy`.
   Acceptance: `pip install -r requirements.txt` succeeds in a fresh venv. If a VoxCPM2 dep

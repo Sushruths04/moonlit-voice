@@ -1,15 +1,16 @@
-# DreamVoice — pinned deps. Codex: confirm exact versions/extras against each model card
-# before changing. Do NOT bump Gradio or torch mid-build.
-gradio==6.*            # PIN to the exact 6.x you install; gr.Audio uses sources=[...]
-torch                  # PIN to the version compatible with VoxCPM2 / your CUDA
-huggingface_hub
-soundfile
-librosa
-numpy
-
-# --- VoxCPM2 runtime: set per https://github.com/OpenBMB/VoxCPM model card ---
-# voxcpm            # the official package, if that is how the card installs it
-# transformers      # if VoxCPM2 loads via transformers instead
+# DreamVoice pinned dependencies.
+# VoxCPM2 card/GitHub: pip install voxcpm; Python >=3.10, PyTorch >=2.5.0, CUDA >=12.0.
+# MiniCPM5-1B card: Transformers path uses transformers >=5.6 plus accelerate and torch.
+gradio==6.18.0
+torch==2.11.0
+torchaudio==2.11.0
+voxcpm==2.0.3
+transformers==5.12.0
+accelerate==1.14.0
+huggingface_hub==1.19.0
+soundfile==0.14.0
+librosa==0.11.0
+numpy==2.2.6
 
 # --- Stretch (install only when enabling that feature) ---
 # cohere            # S4 Tiny Aya / Transcribe
