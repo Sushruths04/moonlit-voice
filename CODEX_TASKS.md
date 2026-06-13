@@ -16,7 +16,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
   `huggingface_hub`, `soundfile`, `librosa`, `numpy`.
   Acceptance: `pip install -r requirements.txt` succeeds in a fresh venv. If a VoxCPM2 dep
   name is unclear, STOP and read `github.com/OpenBMB/VoxCPM`.
-- [ ] **T0.3** Add a `README.md` line reserving the **public GitHub repo URL** and the
+- [x] **T0.3** Add a `README.md` line reserving the **public GitHub repo URL** and the
   **HF Space URL** (placeholders the human will fill). Commit.
 > Human handles: creating the GitHub repo, the HF Space in `build-small-hackathon`, and confirming
 > Codex commit attribution. Do not attempt to create remote accounts.
