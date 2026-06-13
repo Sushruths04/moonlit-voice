@@ -29,7 +29,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
   load audio, convert to mono, resample to what VoxCPM2 expects, trim silence, enforce
   5–60 s, reject empty/too-quiet clips with a clear `ValueError` message.
   Acceptance: returns a cleaned temp wav for a good clip; raises a friendly error for a 1-s/silent clip.
-- [ ] **T1.2 `story.py`** — `generate_story(genre, mood, hero_name="", language="en") -> str`
+- [x] **T1.2 `story.py`** — `generate_story(genre, mood, hero_name="", language="en") -> str`
   using `openbmb/MiniCPM5-1B`. Strict system prompt:
   *"Write a bedtime story for a 6-year-old. ≤150 words. Structure: a gentle hook, three short
   story beats, a calming resolution, and a final sleepy good-night line. Warm and simple. No
