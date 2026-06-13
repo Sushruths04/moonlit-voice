@@ -40,7 +40,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
   load model once; clone from `ref_wav`; synthesize `text` at a slow bedtime pace; return a 48kHz wav path.
   Read the exact API from the VoxCPM2 model card — do not guess. Delete intermediate temp files.
   Acceptance: given a sample voice + a sentence, produces an audible wav that resembles the reference voice.
-- [ ] **T1.4** Smoke test script `scripts/smoke_test.py` that runs T1.1→T1.2→T1.3 end-to-end on a
+- [x] **T1.4** Smoke test script `scripts/smoke_test.py` that runs T1.1→T1.2→T1.3 end-to-end on a
   sample clip and prints the output wav path. Acceptance: runs without error, produces a playable wav.
 - [ ] ⏸ **CHECKPOINT A** — Print `DONE Phase 1`. **Pause. Human reviews backend before any UI.**
 
