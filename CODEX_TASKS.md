@@ -25,7 +25,7 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
 
 ## Phase 1 — Backend functions (no UI yet) 🟥
 
-- [ ] **T1.1 `audio_utils.py`** — `prepare_reference(path) -> str`:
+- [x] **T1.1 `audio_utils.py`** — `prepare_reference(path) -> str`:
   load audio, convert to mono, resample to what VoxCPM2 expects, trim silence, enforce
   5–60 s, reject empty/too-quiet clips with a clear `ValueError` message.
   Acceptance: returns a cleaned temp wav for a good clip; raises a friendly error for a 1-s/silent clip.
