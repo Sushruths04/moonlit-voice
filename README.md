@@ -27,6 +27,11 @@ bedtime story in it — so a child hears a loved one read to them, even when the
 
 **Built for the Build Small Hackathon (Hugging Face × Gradio, June 2026) — Thousand Token Wood track.**
 
+## Source
+Public GitHub repo: https://github.com/Sushruths04/moonlit-voice
+
+This project was built with OpenAI Codex. See the commit history for Codex-attributed commits.
+
 ## How it works
 1. A parent records 30–60s of their voice (or uploads a clip).
 2. **`openbmb/VoxCPM2`** clones the voice.
@@ -50,7 +55,7 @@ English and **Hindi** are natively supported by VoxCPM2 and demoed here. Kannada
 **experimental** mode fine-tuned on the parent's own voice — see `KANNADA_EXPERIMENT.md`.
 
 ## Links
-- GitHub (Codex-built): `<ADD PUBLIC REPO URL>`
+- GitHub (Codex-built): `https://github.com/Sushruths04/moonlit-voice`
 - Hugging Face Space: `<ADD SPACE URL>`
 - Demo video: `<ADD VIDEO LINK>`
 
