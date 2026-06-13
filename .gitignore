@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Secrets
+.env
+*.key
+
+# Generated audio / temp
+tmp/
+*.wav
+*.mp3
+# Keep a single committed sample clip if you add one.
+!sample_voice.wav
+
+# HF / model caches
+.cache/
+models/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

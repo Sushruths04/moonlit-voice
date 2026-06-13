@@ -1,0 +1,17 @@
+# DreamVoice — pinned deps. Codex: confirm exact versions/extras against each model card
+# before changing. Do NOT bump Gradio or torch mid-build.
+gradio==6.*            # PIN to the exact 6.x you install; gr.Audio uses sources=[...]
+torch                  # PIN to the version compatible with VoxCPM2 / your CUDA
+huggingface_hub
+soundfile
+librosa
+numpy
+
+# --- VoxCPM2 runtime: set per https://github.com/OpenBMB/VoxCPM model card ---
+# voxcpm            # the official package, if that is how the card installs it
+# transformers      # if VoxCPM2 loads via transformers instead
+
+# --- Stretch (install only when enabling that feature) ---
+# cohere            # S4 Tiny Aya / Transcribe
+# modal             # S3 GPU inference
+# (FLUX.2-klein deps per Black Forest Labs card)        # S2 cover art
