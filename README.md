@@ -14,6 +14,8 @@ tags:
   - voxcpm2
   - voice-cloning
   - bedtime-stories
+  - indicf5
+  - indictrans2
 ---
 
 # 🌙 DreamVoice — Bedtime stories in Mom's own voice
@@ -39,24 +41,61 @@ This project was built with OpenAI Codex. See the commit history for Codex-attri
    (magical, funny, calming, dreamy), and optionally names the hero.
 4. **`openbmb/MiniCPM5-1B`** writes a ~150-word, age-6, calming bedtime story.
 5. VoxCPM2 narrates the story **in the parent's cloned voice**, ending on a gentle goodnight.
+6. For **Kannada**: English story → **`ai4bharat/indictrans2-en-indic`** translation → **`ai4bharat/IndicF5`** narration in the parent's voice.
 
 ## Models & credits
-- Voice clone + narration: **`openbmb/VoxCPM2`** (2B, tokenizer-free, 48kHz)
-- Story generation: **`openbmb/MiniCPM5-1B`** (1B — Tiny Titan ≤4B)
-- *(stretch)* Multilingual: `CohereLabs/tiny-aya-global` · Cover art: FLUX.2-klein · GPU: Modal
-- All models ≤ 32B.
+
+### Core models
+| Model | Purpose | Size | License |
+|-------|---------|------|---------|
+| `openbmb/VoxCPM2` | English voice cloning + narration | 2B | OpenBMB |
+| `openbmb/MiniCPM5-1B` | Story generation | 1B | OpenBMB |
+| `ai4bharat/IndicF5` | Kannada voice cloning + narration | 0.4B | MIT |
+| `ai4bharat/indictrans2-en-indic-1B` | English → Kannada translation | 1B | MIT |
+
+### Fine-tuned models (competition badges)
+
+| Model | Purpose | Base | Training |
+|-------|---------|------|----------|
+| [`mitvho09/VoxCPM2-bedtime-lora`](https://huggingface.co/mitvho09/VoxCPM2-bedtime-lora) | English bedtime-story narration | `openbmb/VoxCPM2` | LoRA, LJSpeech, 100 steps |
+| [`mitvho09/IndicF5-Kannada-Bedtime`](https://huggingface.co/mitvho09/IndicF5-Kannada-Bedtime) | Kannada bedtime-story narration | `ai4bharat/IndicF5` | Full fine-tune, Rasa Kannada, 300 steps |
+
+### All models ≤ 32B ✅
+
+## Fine-tuning details
+
+### VoxCPM2 LoRA (English)
+- **Dataset**: LJSpeech (13,100 clips, ~24h)
+- **Method**: LoRA (r=32, alpha=64, DiT only)
+- **Best experiment**: exp6 (r32, lr=5e-5, half data) — val loss 0.872
+- **GPU**: A100-80GB (Modal)
+- **Scripts**: `finetune/sweep.py`
+
+### IndicF5 Kannada
+- **Dataset**: Rasa Kannada (18 clips, ~2min)
+- **Method**: Full fine-tune (CFM component)
+- **Steps**: 300, final loss 0.4553
+- **GPU**: A100-80GB (Modal)
+- **Scripts**: `finetune/indicf5_finetune.py`
 
 ## Privacy
 The parent's recording is processed in memory and **never stored on the server**. It is used only
 to generate the narration for that session.
 
 ## Languages
-English and **Hindi** are natively supported by VoxCPM2 and demoed here. Kannada is an
-**experimental** mode fine-tuned on the parent's own voice — see `KANNADA_EXPERIMENT.md`.
+- **English** — VoxCPM2 (stock + LoRA fine-tuned)
+- **ಕನ್ನಡ Kannada** — IndicF5 (stock + fine-tuned) + IndicTrans2 translation
+
+## Infrastructure
+- **GPU inference**: Modal (A10G for English, A100-80GB for Kannada)
+- **3 separate Modal images**: main (torch 2.11), IndicTrans2 (transformers 4.51.3), IndicF5 (torch 2.4.1)
+- **Volumes**: `dreamvoice-ckpt` (checkpoints), `dreamvoice-ft-data` (training data)
 
 ## Links
 - GitHub (Codex-built): `https://github.com/Sushruths04/moonlit-voice`
 - Hugging Face Space: `<ADD SPACE URL>`
+- VoxCPM2 LoRA: `https://huggingface.co/mitvho09/VoxCPM2-bedtime-lora`
+- IndicF5 Kannada: `https://huggingface.co/mitvho09/IndicF5-Kannada-Bedtime`
 - Demo video: `<ADD VIDEO LINK>`
 
 ## Run locally
@@ -64,4 +103,4 @@ English and **Hindi** are natively supported by VoxCPM2 and demoed here. Kannada
 pip install -r requirements.txt
 python app.py
 ```
-Env vars (only for stretch features): `HF_TOKEN`, `COHERE_API_KEY`, `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`.
+Env vars (only for stretch features): `HF_TOKEN`, `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`.

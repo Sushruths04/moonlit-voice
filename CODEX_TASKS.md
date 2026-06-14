@@ -48,17 +48,17 @@ Legend: 🟥 MVP (must ship) · 🟧 Stretch (only after MVP is deployed) · ⏸
 
 ## Phase 2 — MVP UI 🟥
 
-- [ ] **T2.1 `ui_html.py`** — `gr.HTML` blocks (scoped CSS+JS, no external libs): animated
+- [x] **T2.1 `ui_html.py`** — `gr.HTML` blocks (scoped CSS+JS, no external libs): animated
   starfield, glowing moon, and a CSS 3D storybook flip container. Colors: bg `#0a0a1a→#1a1a3e`,
   accent amber `#f5c842`, 24px radii, serif/handwritten title font (Lora/Pacifico via Google Fonts).
   Acceptance: renders the starfield + moon when injected into a Gradio Blocks page.
-- [ ] **T2.2 `app.py`** — Gradio 6 `gr.Blocks`, single page, **3 stages** with `gr.State`:
+- [x] **T2.2 `app.py`** — Gradio 6 `gr.Blocks`, single page, **3 stages** with `gr.State`:
   - Stage 1 "Record Mom's Voice": `gr.Audio(sources=["microphone","upload"])`, quiet-room guidance, privacy note.
   - Stage 2 "What story tonight?": genre **tiles** (6) + mood buttons (4) + optional hero-name textbox.
   - Stage 3 "Your Story": storybook shows the story text + `gr.Audio` player + "Create another".
   Wire: clip → `audio_utils.prepare_reference` → `story.generate_story` → `tts.clone_and_speak`.
   Show a "tucking you in…" loading state during inference. Acceptance: `python app.py` launches.
-- [ ] **T2.3** End-to-end manual run on Chrome: record 30s → dragons + funny → get a story
+- [x] **T2.3** End-to-end manual run on Chrome: record 30s → dragons + funny → get a story
   narrated in the cloned voice, displayed in the storybook. Acceptance: full path works locally.
 - [ ] ⏸ **CHECKPOINT B** — Print `DONE Phase 2`. **Pause. Human reviews + does the first Space deploy.**
 
