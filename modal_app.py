@@ -269,22 +269,17 @@ class IndicF5TTS:
             INDICF5_ID, trust_remote_code=True, cache_dir="/cache", token=token)
         # Load v2 fine-tuned Kannada checkpoint
         try:
+            from safetensors.torch import load_file
             from huggingface_hub import hf_hub_download
             ckpt_path = hf_hub_download(
                 repo_id=INDICF5_V2_REPO, filename="model.safetensors",
                 cache_dir="/cache", token=token)
-            state = torch.load(ckpt_path, map_location="cpu", weights_only=True)
-            # The v2 checkpoint has full model weights — load into ema_model
-            # Filter keys to only ema_model ones
-            ema_state = {k.replace("ema_model.", ""): v
-                         for k, v in state.items() if k.startswith("ema_model.")}
-            if ema_state:
-                self.model.ema_model.load_state_dict(ema_state, strict=False)
-                print(f"✓ Loaded IndicF5 v2 fine-tuned weights ({len(ema_state)} params)")
-            else:
-                # Maybe it's a CFM-only checkpoint
-                self.model.ema_model.load_state_dict(state, strict=False)
-                print(f"✓ Loaded IndicF5 v2 CFM checkpoint")
+            state = load_file(ckpt_path, device="cpu")
+            # The v2 checkpoint has full model weights saved via save_pretrained
+            # Keys like: ema_model._orig_mod.transformer.text_embed...
+            # We need to load into the full model, not just ema_model
+            self.model.load_state_dict(state, strict=False)
+            print(f"✓ Loaded IndicF5 v2 fine-tuned weights ({len(state)} params)")
         except Exception as e:
             print(f"⚠ Could not load v2 checkpoint: {e} — using stock IndicF5")
         try:
