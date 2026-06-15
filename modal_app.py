@@ -274,20 +274,17 @@ class IndicF5TTS:
         token = os.environ.get("HF_TOKEN") or None
         self.model = AutoModel.from_pretrained(
             INDICF5_ID, trust_remote_code=True, cache_dir="/cache", token=token)
-        # Load v2 fine-tuned Kannada checkpoint from Modal volume
+        # Load best fine-tuned Kannada checkpoint
         try:
             import torch as _torch
-            # Try v3 best (step_0400), then v2, then v3 final
-            for cfm_path in [
-                "/ckpt/indicf5_kannada_v3/step_0400/cfm.pt",
-                "/ckpt/indicf5_kannada_v2/step_0500/cfm.pt",
-                "/ckpt/indicf5_kannada_v3/final/cfm.pt",
-            ]:
-                if os.path.exists(cfm_path):
-                    cfm_state = _torch.load(cfm_path, map_location="cpu", weights_only=True)
-                    self.model.ema_model.load_state_dict(cfm_state)
-                    print(f"✓ Loaded IndicF5 fine-tuned CFM from {cfm_path}")
-                    break
+            # Winner: v2_step0500 (best MOS 4.2, speaking rate 3.0, flatness 0.491)
+            cfm_path = "/ckpt/indicf5_kannada_v2/step_0500/cfm.pt"
+            if not os.path.exists(cfm_path):
+                cfm_path = "/ckpt/indicf5_kannada_v3/final/cfm.pt"
+            if os.path.exists(cfm_path):
+                cfm_state = _torch.load(cfm_path, map_location="cpu", weights_only=True)
+                self.model.ema_model.load_state_dict(cfm_state)
+                print(f"✓ Loaded fine-tuned CFM from {cfm_path}")
             else:
                 print(f"⚠ No fine-tuned checkpoint found")
         except Exception as e:
