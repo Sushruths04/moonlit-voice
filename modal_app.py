@@ -256,8 +256,11 @@ f5_image = (
 )
 
 
+ckpt_vol = modal.Volume.from_name("dreamvoice-ckpt", create_if_missing=True)
+
+
 @app.cls(image=f5_image, gpu="A10G", timeout=900,
-         volumes={"/cache": hf_cache}, min_containers=1,
+         volumes={"/cache": hf_cache, "/ckpt": ckpt_vol}, min_containers=1,
          secrets=[modal.Secret.from_name("dreamvoice-secrets")])
 class IndicF5TTS:
     @modal.enter()
@@ -267,19 +270,19 @@ class IndicF5TTS:
         token = os.environ.get("HF_TOKEN") or None
         self.model = AutoModel.from_pretrained(
             INDICF5_ID, trust_remote_code=True, cache_dir="/cache", token=token)
-        # Load v2 fine-tuned Kannada checkpoint
+        # Load v2 fine-tuned Kannada checkpoint from Modal volume
         try:
-            from safetensors.torch import load_file
-            from huggingface_hub import hf_hub_download
-            ckpt_path = hf_hub_download(
-                repo_id=INDICF5_V2_REPO, filename="model.safetensors",
-                cache_dir="/cache", token=token)
-            state = load_file(ckpt_path, device="cpu")
-            # The v2 checkpoint has full model weights saved via save_pretrained
-            # Keys like: ema_model._orig_mod.transformer.text_embed...
-            # We need to load into the full model, not just ema_model
-            self.model.load_state_dict(state, strict=False)
-            print(f"✓ Loaded IndicF5 v2 fine-tuned weights ({len(state)} params)")
+            import torch as _torch
+            cfm_path = "/ckpt/indicf5_kannada_v2/step_0500/cfm.pt"
+            if not os.path.exists(cfm_path):
+                # Try final
+                cfm_path = "/ckpt/indicf5_kannada_v2/final/cfm.pt"
+            if os.path.exists(cfm_path):
+                cfm_state = _torch.load(cfm_path, map_location="cpu", weights_only=True)
+                self.model.ema_model.load_state_dict(cfm_state)
+                print(f"✓ Loaded IndicF5 v2 fine-tuned CFM from {cfm_path}")
+            else:
+                print(f"⚠ No v2 checkpoint found at /ckpt/indicf5_kannada_v2/")
         except Exception as e:
             print(f"⚠ Could not load v2 checkpoint: {e} — using stock IndicF5")
         try:
