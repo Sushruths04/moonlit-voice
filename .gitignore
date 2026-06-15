@@ -22,6 +22,12 @@ saved_voices/
 .cache/
 models/
 
+# Training data + checkpoints (on Modal volumes / HuggingFace Hub)
+comparison/
+comparison_kannada/
+publish/
+finetune/data/
+
 # OS / editor
 .DS_Store
 .idea/

@@ -1,0 +1,34 @@
+# VoxCPM2 LoRA fine-tune config (speaker adaptation for the parent's voice).
+# Fields follow the VoxCPM2 fine-tuning docs: https://voxcpm.readthedocs.io/
+# TODO(verify): confirm exact key names against your installed voxcpm version before training.
+
+pretrained_path: openbmb/VoxCPM2
+
+train_manifest: /data/manifest_train.jsonl
+val_manifest:   /data/manifest_val.jsonl
+
+sample_rate:      16000   # AudioVAE encoder input
+out_sample_rate:  48000   # decoder output
+
+# LoRA (recommended starting point; <1% params trained, base frozen)
+use_lora:    true
+lora_rank:   32           # 32-64 for harder adaptation
+lora_alpha:  32           # = rank (or 2*rank)
+enable_dit:  true         # keep DiT trainable for voice quality
+
+# Optimization
+batch_size:        2
+grad_accum_steps:  8
+learning_rate:     1.0e-4
+max_steps:         1200
+warmup_steps:      100
+
+# Checkpointing / eval (drives resume + self-improving loop)
+output_dir:   /ckpt
+save_every:   200
+eval_every:   200
+keep_best:    true
+
+# New-language note (only if adapting to a new language, not pure speaker adaptation):
+# raise the stop-loss weight, since stop loss and diffusion loss converge at different rates.
+# stop_loss_weight: 2.0

@@ -3,8 +3,7 @@ title: DreamVoice
 emoji: 🌙
 colorFrom: indigo
 colorTo: yellow
-sdk: gradio
-sdk_version: "6.18.0"
+sdk: docker
 app_file: app.py
 pinned: true
 license: mit
