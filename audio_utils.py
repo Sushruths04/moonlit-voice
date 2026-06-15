@@ -50,6 +50,12 @@ def prepare_reference(path: str) -> str:
         max_samples = int(MAX_REFERENCE_SECONDS * REFERENCE_SAMPLE_RATE)
         audio = audio[:max_samples]
 
+    # Normalize to -3 dB peak so voice cloning gets a clear reference
+    peak = float(np.max(np.abs(audio)))
+    if peak > 1e-6:
+        target = 10 ** (-3.0 / 20.0)  # -3 dB
+        audio = (audio * (target / peak)).astype(np.float32)
+
     audio = np.clip(audio, -1.0, 1.0)
     fd, cleaned_path = tempfile.mkstemp(prefix="dreamvoice_ref_", suffix=".wav")
     os.close(fd)

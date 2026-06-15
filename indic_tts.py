@@ -93,7 +93,7 @@ def narrate_kannada(ref_wav: str, ref_text: str, kannada_text: str, mood: str = 
 
     model = _get_model()
 
-    pause = _pause_for(mood, energy) * 1.3
+    pause = _pause_for(mood, energy) * 1.05
     silence = np.zeros(int(pause * INDICF5_SR), dtype=np.float32)
 
     chunks = []
