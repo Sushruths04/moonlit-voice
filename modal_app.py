@@ -62,11 +62,11 @@ def _postprocess_np(audio, sr):
     voiced = np.where(is_voiced)[0]
     if voiced.size == 0:
         return audio[: int(sr * 0.1)]
-    start = max(0, int(voiced[0] - sr * 0.03))
-    end = min(len(audio), int(voiced[-1] + sr * 0.05))
+    start = max(0, int(voiced[0] - sr * 0.02))
+    end = min(len(audio), int(voiced[-1] + sr * 0.03))
     trimmed = audio[start:end].copy()
-    max_pause = int(0.20 * sr)
-    target_pause = int(0.12 * sr)
+    max_pause = int(0.18 * sr)
+    remove_above = int(0.40 * sr)
     parts = []
     i, n = 0, len(trimmed)
     while i < n:
@@ -74,7 +74,11 @@ def _postprocess_np(audio, sr):
             j = i
             while j < n and np.abs(trimmed[j]) <= threshold:
                 j += 1
-            parts.append(trimmed[i: min(i + max_pause, j)])
+            silence_len = j - i
+            if silence_len <= max_pause:
+                parts.append(trimmed[i:j])
+            elif silence_len <= remove_above:
+                parts.append(trimmed[i:i + max_pause])
             i = j
         else:
             j = i
