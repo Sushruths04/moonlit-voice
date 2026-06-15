@@ -1,10 +1,11 @@
-# DreamVoice — pinned deps for Hugging Face Spaces (GPU Zero / T4 16GB)
+# DreamVoice — pinned deps for Hugging Face Spaces (ZeroGPU / RTX Pro 6000)
+# ZeroGPU: torch 2.1.2–2.5.1 supported, Python 3.10.13
 # VoxCPM2 card: Python >=3.10, PyTorch >=2.5.0, CUDA >=12.0
 # MiniCPM5-1B card: Transformers >=5.6
 # IndicTrans2: IndicTransToolkit from GitHub
 gradio==6.18.0
-torch>=2.5.0
-torchaudio>=2.5.0
+torch==2.5.1
+torchaudio==2.5.1
 voxcpm==2.0.3
 transformers>=5.6.0
 accelerate>=1.0.0
@@ -14,3 +15,4 @@ librosa==0.11.0
 numpy<3.0.0
 sentencepiece==0.2.0
 git+https://github.com/VarunGumma/IndicTransToolkit.git
+spaces

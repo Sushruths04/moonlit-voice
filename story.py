@@ -64,6 +64,13 @@ def _get_model() -> tuple[Any, Any]:
     return _tokenizer, _model
 
 
+# Load at module level for ZeroGPU (CUDA emulation outside @spaces.GPU)
+try:
+    _get_model()
+except Exception:
+    pass
+
+
 def generate_story(
     genre: str,
     mood: str,

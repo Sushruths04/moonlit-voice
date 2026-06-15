@@ -1,9 +1,14 @@
-"""DreamVoice — Gradio 6 entry-point for the bedtime-story voice-cloning app."""
+"""DreamVoice — Gradio 6 entry-point for the bedtime-story voice-cloning app.
+
+HuggingFace ZeroGPU compatible: all GPU functions decorated with @spaces.GPU.
+Models are loaded lazily at module level (outside @spaces.GPU) for CUDA emulation.
+"""
 
 from __future__ import annotations
 
 import os
 
+import spaces
 import gradio as gr
 
 from audio_utils import prepare_reference
@@ -22,8 +27,6 @@ MOOD_CHOICES = [
 ]
 LANGUAGE_MAP = {"English": "en", "ಕನ್ನಡ Kannada": "kn"}
 
-# IndicF5 (Kannada) needs the transcript of the reference clip. So we ask the parent
-# to read THIS exact sentence — then we always know the transcript precisely.
 REF_SENTENCE = "Once upon a time, in a cozy little house, a gentle voice began to tell a bedtime story."
 
 
@@ -41,7 +44,6 @@ def _stage_css() -> str:
   color: rgba(255,255,255,.55); text-align: center; margin-top: .2rem;
 }
 
-/* genre / mood radio styling */
 .dv-radio-group fieldset { border: none !important; padding: 0 !important; }
 .dv-radio-group legend { display: none !important; }
 .dv-radio-group label {
@@ -60,7 +62,6 @@ def _stage_css() -> str:
   background: rgba(245,200,66,.18) !important; border-color: #f5c842 !important; color: #f5c842 !important;
 }
 
-/* emoji tiles (genre / mood) */
 .dv-tiles label {
   font-size: 1rem !important; padding: 14px 20px !important; margin: 6px !important;
 }
@@ -68,7 +69,6 @@ def _stage_css() -> str:
   transform: scale(1.06); box-shadow: 0 0 18px rgba(245,200,66,.45) !important;
 }
 
-/* button accent */
 .dv-btn-accent {
   background: #f5c842 !important; color: #1a1a3e !important; border: none !important;
   border-radius: 24px !important; padding: .65rem 1.8rem !important; font-weight: 700 !important;
@@ -77,7 +77,6 @@ def _stage_css() -> str:
 }
 .dv-btn-accent:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(245,200,66,.4) !important; }
 
-/* read-aloud reference box */
 .dv-readbox {
   max-width: 620px; margin: .4rem auto 1rem; padding: 1rem 1.3rem;
   border-radius: 18px; text-align: center;
@@ -93,20 +92,16 @@ def _stage_css() -> str:
   font-size: 1.05rem; line-height: 1.55; color: #f3efe0;
 }
 
-/* audio player accent */
 .dv-player { border-radius: 18px !important; box-shadow: 0 0 24px rgba(245,200,66,.18) !important; }
 
-/* energy slider */
 .dv-slider { max-width: 460px; margin: 0 auto .4rem; }
 
-/* inline error */
 .dv-error {
   max-width: 560px; margin: .2rem auto 0; padding: .7rem 1rem; border-radius: 14px;
   text-align: center; font-family: 'Lora', Georgia, serif; color: #ffd9d0;
   background: rgba(255,120,90,.12); border: 1px solid rgba(255,120,90,.35);
 }
 
-/* loading scene — "tucking you in…" */
 .dv-loading { text-align: center; padding: 3rem 1rem 2rem; }
 .dv-loading-moon { font-size: 4rem; animation: dv-bob 3s ease-in-out infinite; }
 @keyframes dv-bob { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
@@ -117,7 +112,6 @@ def _stage_css() -> str:
 @keyframes dv-zzz { 0% { opacity: 0; transform: translateY(8px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
 .dv-loading-text { font-family: 'Pacifico', cursive; color: #f3efe0; font-size: 1.3rem; margin-top: .6rem; }
 
-/* now-playing waveform */
 .dv-wave { display: flex; gap: 5px; justify-content: center; align-items: flex-end; height: 42px; margin: .8rem 0 .2rem; }
 .dv-wave span {
   width: 5px; border-radius: 3px; background: linear-gradient(#f5c842, #ffaa00);
@@ -132,7 +126,6 @@ def _stage_css() -> str:
 .dv-wave span:nth-child(9){height:16px}
 @keyframes dv-wave { 0%,100% { transform: scaleY(.4); opacity: .7; } 50% { transform: scaleY(1); opacity: 1; } }
 
-/* footer */
 .dv-footer {
   text-align: center; padding: 1.5rem 0 .5rem; font-family: 'Lora', Georgia, serif;
   font-size: .82rem; color: rgba(255,255,255,.35);
@@ -145,8 +138,9 @@ def _stage_css() -> str:
 """
 
 
+@spaces.GPU(duration=120)
 def _tell_story(audio_path, genre, mood, hero_name, language_label, length, energy):
-    """Full pipeline: prepare ref -> story -> clone & speak. Raises on any problem."""
+    """Full pipeline: prepare ref -> story -> clone & speak. Runs on ZeroGPU."""
     errors = []
     if not audio_path:
         errors.append("Please record or upload a voice clip first.")
@@ -162,7 +156,6 @@ def _tell_story(audio_path, genre, mood, hero_name, language_label, length, ener
     ref_wav = None
     try:
         ref_wav = prepare_reference(audio_path)
-        # Story is always written in English (reliable), then translated for Kannada.
         english_story = generate_story(
             genre, mood, hero_name.strip() if hero_name else "",
             language="en", length=length, energy=energy_f,
@@ -186,33 +179,30 @@ def _tell_story(audio_path, genre, mood, hero_name, language_label, length, ener
 
 
 def _run_story(audio_path, genre, mood, hero_name, language_label, length, energy):
-    """UI generator: show the loading scene, run the pipeline, then reveal the story —
-    and on failure return gracefully to Stage 1 with a friendly message (never get stuck)."""
-    # Phase 1 → loading
+    """UI generator: loading scene -> pipeline -> reveal/error."""
     yield (
-        gr.update(visible=False),   # stage1
-        gr.update(visible=True),    # loading_panel
-        gr.update(visible=False),   # stage2
-        gr.update(),                # story_display
-        gr.update(),                # audio_player
-        gr.update(visible=False, value=""),  # error_box
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(),
+        gr.update(),
+        gr.update(visible=False, value=""),
     )
     try:
         display, audio = _tell_story(audio_path, genre, mood, hero_name, language_label, length, energy)
-    except Exception as exc:  # noqa: BLE001 - surface every failure inline, never crash the UI
+    except Exception as exc:
         yield (
-            gr.update(visible=True),    # back to stage1
-            gr.update(visible=False),   # loading off
-            gr.update(visible=False),   # stage2 off
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(visible=False),
             gr.update(), gr.update(),
             gr.update(visible=True, value=f'<div class="dv-error">😴 {exc}</div>'),
         )
         return
-    # Phase 2 → reveal
     yield (
-        gr.update(visible=False),   # stage1
-        gr.update(visible=False),   # loading off
-        gr.update(visible=True),    # stage2
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=True),
         display, audio,
         gr.update(visible=False, value=""),
     )
@@ -222,7 +212,6 @@ def _build_app() -> gr.Blocks:
     with gr.Blocks(title="DreamVoice — Bedtime Stories in Mom's Voice") as demo:
         starfield_background()
 
-        # ═══ Stage 1 — Record + Pick ═══════════════════════════════
         with gr.Column(visible=True) as stage1:
             gr.HTML('<h2 class="dv-section-title">🎙️ Record Mom\'s Voice</h2>')
             gr.HTML(
@@ -290,7 +279,6 @@ def _build_app() -> gr.Blocks:
             error_box = gr.HTML(visible=False)
             tell_btn = gr.Button("Tell Me a Story ✨", elem_classes=["dv-btn-accent"])
 
-        # ═══ Loading scene — "tucking you in…" ═════════════════════
         with gr.Column(visible=False) as loading_panel:
             gr.HTML(
                 '<div class="dv-loading">'
@@ -302,7 +290,6 @@ def _build_app() -> gr.Blocks:
                 "</div>"
             )
 
-        # ═══ Stage 2 — Result ═══════════════════════════════════════
         with gr.Column(visible=False) as stage2:
             story_display = storybook_html("", "Tonight's Story")
             audio_player = gr.Audio(
@@ -320,7 +307,6 @@ def _build_app() -> gr.Blocks:
             )
             again_btn = gr.Button("Create Another Story 🔄", elem_classes=["dv-btn-accent"])
 
-        # ── Wire tell_btn (generator drives loading → reveal/error) ─
         tell_btn.click(
             fn=_run_story,
             inputs=[audio_input, genre_radio, mood_radio, hero_name_input,
@@ -329,19 +315,17 @@ def _build_app() -> gr.Blocks:
             api_name="tell_story",
         )
 
-        # ── Wire "Create Another" ─────────────────────────────────
         again_btn.click(
             fn=lambda: (
-                gr.update(visible=True),    # stage1
-                gr.update(visible=False),   # loading
-                gr.update(visible=False),   # stage2
-                gr.update(visible=False, value=""),  # error_box
+                gr.update(visible=True),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False, value=""),
             ),
             inputs=[],
             outputs=[stage1, loading_panel, stage2, error_box],
         )
 
-        # ── Footer ────────────────────────────────────────────────
         gr.HTML(
             '<div class="dv-footer">'
             'DreamVoice &middot; English: VoxCPM2 &middot; ಕನ್ನಡ: IndicF5 &middot; Stories: MiniCPM'

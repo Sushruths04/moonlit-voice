@@ -48,6 +48,13 @@ def _get_model():
     return _model
 
 
+# Load at module level for ZeroGPU (CUDA emulation outside @spaces.GPU)
+try:
+    _get_model()
+except Exception:
+    pass
+
+
 def _split_sentences(text: str, max_chars: int = 200):
     parts = re.split(r"(?<=[.!?।])\s+|\n+", text.strip())
     out = []
