@@ -277,18 +277,21 @@ class IndicF5TTS:
         # Load v2 fine-tuned Kannada checkpoint from Modal volume
         try:
             import torch as _torch
-            cfm_path = "/ckpt/indicf5_kannada_v2/step_0500/cfm.pt"
-            if not os.path.exists(cfm_path):
-                # Try final
-                cfm_path = "/ckpt/indicf5_kannada_v2/final/cfm.pt"
-            if os.path.exists(cfm_path):
-                cfm_state = _torch.load(cfm_path, map_location="cpu", weights_only=True)
-                self.model.ema_model.load_state_dict(cfm_state)
-                print(f"✓ Loaded IndicF5 v2 fine-tuned CFM from {cfm_path}")
+            # Try v3 best (step_0400), then v2, then v3 final
+            for cfm_path in [
+                "/ckpt/indicf5_kannada_v3/step_0400/cfm.pt",
+                "/ckpt/indicf5_kannada_v2/step_0500/cfm.pt",
+                "/ckpt/indicf5_kannada_v3/final/cfm.pt",
+            ]:
+                if os.path.exists(cfm_path):
+                    cfm_state = _torch.load(cfm_path, map_location="cpu", weights_only=True)
+                    self.model.ema_model.load_state_dict(cfm_state)
+                    print(f"✓ Loaded IndicF5 fine-tuned CFM from {cfm_path}")
+                    break
             else:
-                print(f"⚠ No v2 checkpoint found at /ckpt/indicf5_kannada_v2/")
+                print(f"⚠ No fine-tuned checkpoint found")
         except Exception as e:
-            print(f"⚠ Could not load v2 checkpoint: {e} — using stock IndicF5")
+            print(f"⚠ Could not load fine-tuned checkpoint: {e}")
         try:
             self.model = self.model.to("cuda")
         except Exception:
