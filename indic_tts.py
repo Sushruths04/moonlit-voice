@@ -1,26 +1,82 @@
-"""Kannada narration in the parent's cloned voice via AI4Bharat IndicF5 (Modal GPU).
+"""Kannada narration via AI4Bharat IndicF5 — local GPU for HF Spaces.
 
-IndicF5 clones a voice from a reference clip + its transcript and speaks Kannada
-zero-shot. We synthesize sentence-by-sentence (see modal_app) so the narration has
-natural prosody instead of a flat, continuous machine tone.
+Uses the fine-tuned checkpoint from mitvho09/IndicF5-Kannada-Bedtime-v2
+(best Kannada quality: MOS 4.2, speaking rate 3.0 syll/s).
 """
 
 from __future__ import annotations
 
-import io
 import os
+import re
 import tempfile
 
-MODEL_ID = "ai4bharat/IndicF5"
+import numpy as np
+import torch
+
+INDICF5_ID = "ai4bharat/IndicF5"
+INDICF5_V2_REPO = "mitvho09/IndicF5-Kannada-Bedtime-v2"
+INDICF5_SR = 24_000
+
+_model = None
+
+
+def _get_model():
+    global _model
+    if _model is None:
+        from transformers import AutoModel
+        token = os.environ.get("HF_TOKEN") or None
+
+        _model = AutoModel.from_pretrained(
+            INDICF5_ID, trust_remote_code=True, token=token)
+
+        # Load fine-tuned Kannada checkpoint from HuggingFace Hub
+        try:
+            from huggingface_hub import hf_hub_download
+            cfm_path = hf_hub_download(
+                repo_id=INDICF5_V2_REPO,
+                filename="cfm.pt",
+                token=token,
+            )
+            cfm_state = torch.load(cfm_path, map_location="cpu", weights_only=True)
+            _model.ema_model.load_state_dict(cfm_state)
+            print(f"✓ Loaded fine-tuned CFM from {INDICF5_V2_REPO}")
+        except Exception as e:
+            print(f"⚠ Could not load fine-tuned checkpoint: {e}")
+
+        _model = _model.to("cuda")
+        _model.eval()
+    return _model
+
+
+def _split_sentences(text: str, max_chars: int = 200):
+    parts = re.split(r"(?<=[.!?।])\s+|\n+", text.strip())
+    out = []
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+        while len(p) > max_chars:
+            cut = p.rfind(" ", 0, max_chars)
+            cut = cut if cut > 0 else max_chars
+            out.append(p[:cut].strip())
+            p = p[cut:].strip()
+        out.append(p)
+    return out or [text.strip()]
+
+
+def _pause_for(mood: str, energy: float = 0.45) -> float:
+    energy = max(0.0, min(1.0, float(energy)))
+    base = 0.45 if mood in ("funny", "magical") else 0.65
+    return round(base + (0.85 - base) * (1.0 - energy), 3)
+
+
+def _postprocess_np(audio, sr):
+    from audio_postprocess import postprocess
+    return postprocess(audio, sr)
 
 
 def narrate_kannada(ref_wav: str, ref_text: str, kannada_text: str, mood: str = "", energy: float = 0.45) -> str:
-    """Clone the parent's voice and narrate Kannada text. Returns a temp WAV path.
-
-    *ref_text* MUST be the transcript of *ref_wav* (IndicF5 requires it). In the app
-    the parent reads a known sentence we display, so we always know it exactly.
-    *energy* (0=calm..1=lively) shapes the pacing.
-    """
+    """Clone the parent's voice and narrate Kannada text. Returns a temp WAV path."""
     if not ref_wav or not os.path.exists(ref_wav):
         raise ValueError("Please provide a prepared voice reference WAV.")
     if not (ref_text or "").strip():
@@ -28,27 +84,29 @@ def narrate_kannada(ref_wav: str, ref_text: str, kannada_text: str, mood: str = 
     if not (kannada_text or "").strip():
         raise ValueError("Please provide Kannada text to narrate.")
 
-    import modal
+    model = _get_model()
+
+    pause = _pause_for(mood, energy) * 1.3
+    silence = np.zeros(int(pause * INDICF5_SR), dtype=np.float32)
+
+    chunks = []
+    for sentence in _split_sentences(kannada_text, max_chars=200):
+        audio = model(sentence, ref_audio_path=ref_wav, ref_text=ref_text.strip())
+        audio = np.asarray(audio, dtype=np.float32)
+        if audio.size and float(np.max(np.abs(audio))) > 1.0:
+            audio = audio / 32768.0
+        if audio.size:
+            chunks.append(audio)
+            chunks.append(silence)
+
+    if not chunks:
+        raise RuntimeError("IndicF5 produced no audio.")
+
+    full = np.concatenate(chunks)
+    full = _postprocess_np(full, INDICF5_SR)
+
     import soundfile as sf
-
-    with open(ref_wav, "rb") as fh:
-        ref_bytes = fh.read()
-
-    try:
-        fn = modal.Function.from_name("dreamvoice-tts", "synthesize_kannada")
-        wav_bytes = fn.remote(ref_bytes, ref_text.strip(), kannada_text.strip(), mood, energy)
-    except Exception as exc:  # noqa: BLE001 - surface a user-actionable app error.
-        raise RuntimeError(
-            "Kannada narration (IndicF5) failed. Confirm `modal deploy modal_app.py` has run. "
-            f"Original error: {exc}"
-        ) from exc
-
-    from audio_postprocess import postprocess
-
-    audio, sr = sf.read(io.BytesIO(wav_bytes), dtype="float32")
-    audio = postprocess(audio, sr)
-
     fd, out_path = tempfile.mkstemp(prefix="dreamvoice_kn_", suffix=".wav")
     os.close(fd)
-    sf.write(out_path, audio, sr)
+    sf.write(out_path, full, INDICF5_SR)
     return out_path
